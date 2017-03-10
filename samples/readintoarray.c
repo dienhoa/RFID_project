@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 {
   TMR_Reader r, *rp;
   TMR_Status ret;
-  /*TMR_Region region;*/
+  TMR_Region region;
   TMR_ReadPlan plan;
   uint8_t *antennaList = NULL;
   uint8_t buffer[20];
@@ -167,10 +167,10 @@ int main(int argc, char *argv[])
   ret = TMR_paramGet(rp, TMR_PARAM_REGION_ID, &region);
   checkerr(rp, ret, 1, "getting region");
   */
-  // printf("Setting region to EU3.\n");
-  // region = TMR_REGION_EU3;
-  // ret = TMR_paramSet(rp, TMR_PARAM_REGION_ID, &region);
-  // checkerr(rp, ret, 1, "setting region");
+  printf("Setting region to EU3.\n");
+  region = TMR_REGION_EU3;
+  ret = TMR_paramSet(rp, TMR_PARAM_REGION_ID, &region);
+  checkerr(rp, ret, 1, "setting region");
 
   {
     printf("Setting hoptable to 866300.\n");
@@ -203,7 +203,12 @@ int main(int argc, char *argv[])
   ret = TMR_paramSet(rp, TMR_PARAM_GEN2_SESSION , &session);      
   checkerr(rp, ret, 1, "setting Session");
   }
-
+  // {
+  //   TMR_GEN2_Target targetvalue = TMR_GEN2_TARGET_AB;
+  //   printf("Setting Target to AB\n");
+  //   ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TARGET , &targetvalue); 
+  //   checkerr(rp, ret, 1, "setting Target");
+  // }
   // { // Setting Q static 0
   // TMR_GEN2_Q Q;
   // Q.type = TMR_SR_GEN2_Q_STATIC;
@@ -242,7 +247,7 @@ int main(int argc, char *argv[])
   {
     /* false -- Each antenna gets a separate record
      * true -- All antennas share a single record */
-    bool value = false;
+    bool value = true;
     ret = TMR_paramSet(rp, TMR_PARAM_TAGREADDATA_UNIQUEBYANTENNA,&value);
     checkerr(rp, ret, 1, "setting uniqueByAntenna");
   }
@@ -264,7 +269,7 @@ int main(int argc, char *argv[])
       phase_ant_1_sum = 0;
       phase_ant_2_sum = 0;
       average_delta_phase = 0;
-      ret = TMR_readIntoArray(rp, 600, &tagCount, &tagReads);
+      ret = TMR_readIntoArray(rp, 200, &tagCount, &tagReads);
       checkerr(rp, ret, 1, "reading tags");
 
       printf("%d tags found.\n", tagCount);

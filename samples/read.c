@@ -21,7 +21,7 @@
 #ifndef USE_TRANSPORT_LISTENER
 #define USE_TRANSPORT_LISTENER 0
 #endif
-#define PRINT_TAG_METADATA 0
+#define PRINT_TAG_METADATA 1
 #define numberof(x) (sizeof((x))/sizeof((x)[0]))
 
 #define usage() {errx(1, "read readerURL [--ant antenna_list] [--pow read_power]\n"\
@@ -379,6 +379,7 @@ if (TMR_ERROR_TAG_ID_BUFFER_FULL == ret)
 #endif
     
     printf("EPC:%s ", epcStr);
+
 // Enable PRINT_TAG_METADATA Flags to print Metadata value
 #if PRINT_TAG_METADATA
 {
