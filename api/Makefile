@@ -68,7 +68,7 @@ HEADERS += tmr_types.h
 HEADERS += tmr_utils.h
 
 DBG ?= -g
-#CWARN = -Werror -Wall
+CWARN = -Werror -Wall
 # Add -Wextra to chase down warnings that might appear on build server, but not dev machines
 #CWARN += -Wextra
 ifneq ($(TMR_ENABLE_SERIAL_READER_ONLY), 1)
@@ -129,8 +129,11 @@ PROGS += untraceable
 PROGS += autonomousmode
 endif
 
+EXE += ../dev/bin/read 
+EXE += ../dev/bin/phase_detect 
+
 ifneq ($(TMR_ENABLE_SERIAL_READER_ONLY), 1)
-all: $(LTKC_LIB) $(STATIC_LIB) $(SHARED_LIB) $(PROGS)
+all: $(LTKC_LIB) $(STATIC_LIB) $(SHARED_LIB) $(PROGS) $(EXE)
 
 $(OBJS): $(LTKC_LIB) $(LTKC_TM_IB)
 
@@ -141,7 +144,7 @@ lib/LTK: lib/install_LTKC.sh
 	cd $(LTKC_LIB_DIR); make CC="$(CC) $(CFLAGS)" STRIP="$(STRIP)"
 
 else
-all: $(STATIC_LIB) $(SHARED_LIB) $(PROGS)
+all: $(STATIC_LIB) $(SHARED_LIB) $(PROGS) $(EXE)
 
 $(OBJS):
 endif
@@ -162,9 +165,11 @@ ifndef SKIP_SAMPLES
 include samples.mk
 endif
 
+include dev.mk
+
 .PHONY: clean
 clean:
-	rm -f $(STATIC_LIB) $(SHARED_LIB) $(PROGS) *.o ../samples/*.o core tests/*.output
+	rm -f $(STATIC_LIB) $(SHARED_LIB) $(EXE) ../dev/src/*.o $(PROGS) *.o ../samples/*.o core tests/*.output
 	rm -fr lib/LTK
 
 .PHONY: test
