@@ -3,7 +3,7 @@ This project is about tracking RFID tag by using 2x2 miniature antenna.
 
 Reader Used: ThingMagic M6e
 
-API: Mercury - C
+API: mercuryapi-1.29.2.10
 
 OS: Ubuntu 16.04
 
