@@ -47,7 +47,7 @@ If you don't want to compile the samples files (Samples that created by ThingMag
 make SKIP_SAMPLES=1
 ```
 
-## Running bin file
+### Running bin file
 ```
 ../dev/bin/phase_detect tmr:///dev/ttyUSB0 --ant 1,2
 ```
