@@ -172,43 +172,43 @@ int main(int argc, char *argv[])
   ret = TMR_paramSet(rp, TMR_PARAM_REGION_ID, &region);
   checkerr(rp, ret, 1, "setting region");
 
-  {
-    printf("Setting hoptable to 866300.\n");
-    uint32_t hoptablelist[1] = {866300};//hoptable: 866300, 866900, 867500, 865700, 
-    TMR_uint32List hoptable;
-    hoptable.list = hoptablelist;
-    hoptable.len = 1;
-    hoptable.max = 1;
-    ret = TMR_paramSet(rp, TMR_PARAM_REGION_HOPTABLE, &hoptable);
-    checkerr(rp, ret, 1, "setting hoptable");
-  }
+  
+  printf("Setting hoptable to 866300.\n");
+  uint32_t hoptablelist[1] = {866300};//hoptable: 866300, 866900, 867500, 865700, 
+  TMR_uint32List hoptable;
+  hoptable.list = hoptablelist;
+  hoptable.len = 1;
+  hoptable.max = 1;
+  ret = TMR_paramSet(rp, TMR_PARAM_REGION_HOPTABLE, &hoptable);
+  checkerr(rp, ret, 1, "setting hoptable");
+  
 
-  { // Setting Tari to 25uS
-  TMR_GEN2_Tari tari = TMR_GEN2_TARI_25US; // should be 25 ????
+   // Setting Tari to 25uS
+  TMR_GEN2_Tari tari = TMR_GEN2_TARI_6_25US; // should be 25 ????
   printf("Setting Tari to 25us\n");
   ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TARI , &tari);      
   checkerr(rp, ret, 1, "setting tari");
-  }
+  
 
-  { // Setting miller to 8
+   // Setting miller to 8
   TMR_GEN2_TagEncoding miller = TMR_GEN2_MILLER_M_8;
   printf("Setting miller to 8\n");
   ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TAGENCODING , &miller);      
   checkerr(rp, ret, 1, "setting miller");
-  }
+  
 
-  { // Setting Session to 1
+   // Setting Session to 1
   TMR_GEN2_Session session = TMR_GEN2_SESSION_S0;
   printf("Setting Session to 1\n");
   ret = TMR_paramSet(rp, TMR_PARAM_GEN2_SESSION , &session);      
   checkerr(rp, ret, 1, "setting Session");
-  }
-  // {
-  //   TMR_GEN2_Target targetvalue = TMR_GEN2_TARGET_AB;
-  //   printf("Setting Target to AB\n");
-  //   ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TARGET , &targetvalue); 
-  //   checkerr(rp, ret, 1, "setting Target");
-  // }
+  
+  
+  // TMR_GEN2_Target targetvalue = TMR_GEN2_TARGET_AB;
+  // printf("Setting Target to AB\n");
+  // ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TARGET , &targetvalue); 
+  // checkerr(rp, ret, 1, "setting Target");
+  
   // { // Setting Q static 0
   // TMR_GEN2_Q Q;
   // Q.type = TMR_SR_GEN2_Q_STATIC;
@@ -244,32 +244,32 @@ int main(int argc, char *argv[])
   ret = TMR_paramSet(rp, TMR_PARAM_READ_PLAN, &plan);
   checkerr(rp, ret, 1, "setting read plan");
 
-  {
+  
     /* false -- Each antenna gets a separate record
      * true -- All antennas share a single record */
-    bool value = true;
-    ret = TMR_paramSet(rp, TMR_PARAM_TAGREADDATA_UNIQUEBYANTENNA,&value);
-    checkerr(rp, ret, 1, "setting uniqueByAntenna");
-  }
+  bool value = true;
+  ret = TMR_paramSet(rp, TMR_PARAM_TAGREADDATA_UNIQUEBYANTENNA,&value);
+  checkerr(rp, ret, 1, "setting uniqueByAntenna");
+  
   {
     int32_t tagCount;
-    int32_t ant_1_count;
-    int32_t ant_2_count;
-    int32_t phase_ant_1_sum; 
-    int32_t phase_ant_2_sum; 
-    int32_t average_delta_phase;
-    int32_t phase_1_pr;
-    int32_t phase_2_pr;
+    // int32_t ant_1_count;
+    // int32_t ant_2_count;
+    // int32_t phase_ant_1_sum; 
+    // int32_t phase_ant_2_sum; 
+    // int32_t average_delta_phase;
+    // int32_t phase_1_pr;
+    // int32_t phase_2_pr;
     TMR_TagReadData* tagReads;
     int i;
     while(1)
     {
-      ant_1_count = 0;
-      ant_2_count = 0;
-      phase_ant_1_sum = 0;
-      phase_ant_2_sum = 0;
-      average_delta_phase = 0;
-      ret = TMR_readIntoArray(rp, 500, &tagCount, &tagReads);
+      // ant_1_count = 0;
+      // ant_2_count = 0;
+      // phase_ant_1_sum = 0;
+      // phase_ant_2_sum = 0;
+      // average_delta_phase = 0;
+      ret = TMR_readIntoArray(rp, 400, &tagCount, &tagReads);
       checkerr(rp, ret, 1, "reading tags");
 
       printf("%d tags found.\n", tagCount);
@@ -279,70 +279,15 @@ int main(int argc, char *argv[])
         TMR_TagReadData* trd = &tagReads[i];
         char epcStr[128];
         TMR_bytesToHex(trd->tag.epc, trd->tag.epcByteCount, epcStr);
-        if (0x00 == strcmp("300833B2DDD9014000000000",epcStr))
-        {
-          if (trd->antenna == 1)
-          {
-            if (i<=1)
-            {
-              phase_1_pr = trd->phase;
-            }
-            
-            if ((trd->phase - phase_1_pr < 60)&&(trd->phase - phase_1_pr > -60))
-            {
-              phase_ant_1_sum += trd->phase;
-              ant_1_count++;
-              phase_1_pr = trd->phase;
-            }
-          }
-          if (trd->antenna == 2)
-          {
-            if (i<=1)
-            {
-              phase_2_pr = trd->phase;
-            }
-            
-            if ((trd->phase - phase_2_pr < 60)&&(trd->phase - phase_2_pr > -60))
-            {
-              phase_ant_2_sum += trd->phase;
-              ant_2_count++;
-              phase_2_pr = trd->phase;
-            }
-
-          }
           printf("%s", epcStr);
           printf(" ant:%d", trd->antenna);
           printf(" phase:%d ", trd->phase);
           printf(" RSSI:%d ", trd->rssi);
           printf(" frequency:%d", trd->frequency);
           printf("\n");   
-        }
       }
-          
-      if((ant_1_count!=0)&&(ant_2_count!=0))
-      {
-        average_delta_phase = (int)(phase_ant_1_sum/ant_1_count) - (int)(phase_ant_2_sum/ant_2_count);
-        if(average_delta_phase<-90)
-        {
-          average_delta_phase = average_delta_phase + 180;
-        }
-        else if(average_delta_phase > 90 )
-        {
-          average_delta_phase =  -180 + average_delta_phase;
-        }
-        // printf("antenna 1 count:%d\n", ant_1_count);
-        // printf("antenna 2 count:%d\n", ant_2_count);
-        // printf("Sum of Phase ant 1:%d\n", phase_ant_1_sum);
-        // printf("Sum of Phase ant 2:%d\n", phase_ant_2_sum);
-        printf("Average of Difference Phase:%d\n", average_delta_phase);           
-      }
-      else
-      {
-        printf("Not Enough Data to calculate !\n");
-      }
-        free(tagReads);//free dynamics allocated memory 
+      free(tagReads);//free dynamics allocated memory 
     }
-
   }
 
   TMR_destroy(rp);

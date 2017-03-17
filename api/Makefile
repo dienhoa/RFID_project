@@ -131,6 +131,9 @@ endif
 
 EXE += ../dev/bin/read 
 EXE += ../dev/bin/phase_detect 
+EXE += ../dev/bin/test_config 
+EXE += ../dev/bin/readasync
+EXE += ../dev/bin/readasyncfilter
 
 ifneq ($(TMR_ENABLE_SERIAL_READER_ONLY), 1)
 all: $(LTKC_LIB) $(STATIC_LIB) $(SHARED_LIB) $(PROGS) $(EXE)

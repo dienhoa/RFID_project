@@ -1,7 +1,6 @@
 /**
- * Sample program that reads tags in the background and prints the
- * tags found that match a certain filter.
- * @file readasyncfilter.c
+ * Sample program that reads tags in the background
+ * @file readasync.c
  */
 
 #include <tm_reader.h>
@@ -22,10 +21,6 @@
 #define usage() {errx(1, "Please provide reader URL, such as:\n"\
                          "tmr:///com4 or tmr:///com4 --ant 1,2\n"\
                          "tmr://my-reader.example.com or tmr://my-reader.example.com --ant 1,2\n");}
-
-static int matched;
-static int nonMatched;
-uint8_t toMatch;
 
 void errx(int exitval, const char *fmt, ...)
 {
@@ -104,7 +99,7 @@ void parseAntennaList(uint8_t *antenna, uint8_t *antennaCount, char *args)
   *antennaCount = i;
 }
 
-void countMatchListener(TMR_Reader *reader, const TMR_TagReadData *t, void *cookie);
+void callback(TMR_Reader *reader, const TMR_TagReadData *t, void *cookie);
 void exceptionCallback(TMR_Reader *reader, TMR_Status error, void *cookie);
 
 int main(int argc, char *argv[])
@@ -135,9 +130,9 @@ int main(int argc, char *argv[])
 
   if (argc < 2)
   {
-    usage();
+    usage(); 
   }
-  
+
   for (i = 2; i < argc; i+=2)
   {
     if(0x00 == strcmp("--ant", argv[i]))
@@ -156,7 +151,7 @@ int main(int argc, char *argv[])
       usage();
     }
   }
-
+  
   rp = &r;
   ret = TMR_create(rp, argv[1]);
   checkerr(rp, ret, 1, "creating reader");
@@ -228,13 +223,11 @@ int main(int argc, char *argv[])
   ret = TMR_paramSet(rp, TMR_PARAM_READ_PLAN, &plan);
   checkerr(rp, ret, 1, "setting read plan");
 
-  rlb.listener = countMatchListener;
+  rlb.listener = callback;
   rlb.cookie = NULL;
 
   reb.listener = exceptionCallback;
   reb.cookie = NULL;
-
-  toMatch = 0xE2;
 
   ret = TMR_addReadListener(rp, &rlb);
   checkerr(rp, ret, 1, "adding read listener");
@@ -244,7 +237,7 @@ int main(int argc, char *argv[])
 
   ret = TMR_startReading(rp);
   checkerr(rp, ret, 1, "starting reading");
-  
+
 #ifndef WIN32
   sleep(5);
 #else
@@ -254,13 +247,6 @@ int main(int argc, char *argv[])
   ret = TMR_stopReading(rp);
   checkerr(rp, ret, 1, "stopping reading");
 
-  ret = TMR_removeReadListener(rp, &rlb);
-  checkerr(rp, ret, 1, "removing read listener");
-
-  // Print results of search, accumulated in listener object
-  printf("Matching tags: %d\n", matched);
-  printf("Non-matching tags: %d\n", nonMatched);
-
   TMR_destroy(rp);
   return 0;
 
@@ -269,23 +255,15 @@ int main(int argc, char *argv[])
 
 
 void
-countMatchListener(TMR_Reader *reader, const TMR_TagReadData *t, void *cookie)
+callback(TMR_Reader *reader, const TMR_TagReadData *t, void *cookie)
 {
   char epcStr[128];
 
-  if ( (0 < t->tag.epcByteCount) && (t->tag.epc[0] == toMatch))
-  {
-    TMR_bytesToHex(t->tag.epc, t->tag.epcByteCount, epcStr);
-    printf("Background read: %s\n", epcStr);
-    matched ++;
-  }
-  else
-  {
-    nonMatched ++;
-  }
+  TMR_bytesToHex(t->tag.epc, t->tag.epcByteCount, epcStr);
+  printf("Background read: %s\n", epcStr);
 }
 
-void
+void 
 exceptionCallback(TMR_Reader *reader, TMR_Status error, void *cookie)
 {
   fprintf(stdout, "Error:%s\n", TMR_strerr(reader, error));

@@ -25,7 +25,7 @@
 
 static int matched;
 static int nonMatched;
-uint8_t toMatch;
+// char toMatch[128];
 
 void errx(int exitval, const char *fmt, ...)
 {
@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
   reb.listener = exceptionCallback;
   reb.cookie = NULL;
 
-  toMatch = 0xE2;
+  // toMatch = "300833B2DDD9014000000000";
 
   ret = TMR_addReadListener(rp, &rlb);
   checkerr(rp, ret, 1, "adding read listener");
@@ -273,15 +273,18 @@ countMatchListener(TMR_Reader *reader, const TMR_TagReadData *t, void *cookie)
 {
   char epcStr[128];
 
-  if ( (0 < t->tag.epcByteCount) && (t->tag.epc[0] == toMatch))
+  if ( (0 < t->tag.epcByteCount))
   {
     TMR_bytesToHex(t->tag.epc, t->tag.epcByteCount, epcStr);
-    printf("Background read: %s\n", epcStr);
-    matched ++;
-  }
-  else
-  {
-    nonMatched ++;
+
+    // printf("Background read: %s\n", epcStr);
+    if(0 == strcmp("300833B2DDD9014000000000", epcStr))
+    {
+      printf("Background read: %s\n", epcStr);
+      printf(" ant:%d ", t->antenna);
+      matched ++;
+    }
+
   }
 }
 
@@ -290,3 +293,4 @@ exceptionCallback(TMR_Reader *reader, TMR_Status error, void *cookie)
 {
   fprintf(stdout, "Error:%s\n", TMR_strerr(reader, error));
 }
+
