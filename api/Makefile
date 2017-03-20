@@ -68,7 +68,7 @@ HEADERS += tmr_types.h
 HEADERS += tmr_utils.h
 
 DBG ?= -g
-CWARN = -Werror -Wall
+# CWARN = -Werror -Wall
 # Add -Wextra to chase down warnings that might appear on build server, but not dev machines
 #CWARN += -Wextra
 ifneq ($(TMR_ENABLE_SERIAL_READER_ONLY), 1)
