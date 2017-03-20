@@ -183,26 +183,63 @@ int main(int argc, char *argv[])
   ret = TMR_paramGet(rp, TMR_PARAM_REGION_ID, &region);
   checkerr(rp, ret, 1, "getting region");
 
-  if (TMR_REGION_NONE == region)
+  printf("Setting region to EU3.\n");
+  region = TMR_REGION_EU3;
+  ret = TMR_paramSet(rp, TMR_PARAM_REGION_ID, &region);
+  checkerr(rp, ret, 1, "setting region");
+
   {
-    TMR_RegionList regions;
-    TMR_Region _regionStore[32];
-    regions.list = _regionStore;
-    regions.max = sizeof(_regionStore)/sizeof(_regionStore[0]);
-    regions.len = 0;
-
-    ret = TMR_paramGet(rp, TMR_PARAM_REGION_SUPPORTEDREGIONS, &regions);
-    checkerr(rp, ret, __LINE__, "getting supported regions");
-
-    if (regions.len < 1)
-    {
-      checkerr(rp, TMR_ERROR_INVALID_REGION, __LINE__, "Reader doesn't supportany regions");
-    }
-    region = regions.list[0];
-    ret = TMR_paramSet(rp, TMR_PARAM_REGION_ID, &region);
-    checkerr(rp, ret, 1, "setting region");  
+    printf("Setting hoptable to 866300.\n");
+    uint32_t hoptablelist[1] = {866300};//hoptable: 866300, 866900, 867500, 865700, 
+    TMR_uint32List hoptable;
+    hoptable.list = hoptablelist;
+    hoptable.len = 1;
+    hoptable.max = 1;
+    ret = TMR_paramSet(rp, TMR_PARAM_REGION_HOPTABLE, &hoptable);
+    checkerr(rp, ret, 1, "setting hoptable");
   }
 
+  { // Setting Tari to 25uS
+  TMR_GEN2_Tari tari = TMR_GEN2_TARI_25US; // should be 25 ????
+  printf("Setting Tari to 25us\n");
+  ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TARI , &tari);      
+  checkerr(rp, ret, 1, "setting tari");
+  }
+
+  { // Setting miller to 8
+  TMR_GEN2_TagEncoding miller = TMR_GEN2_MILLER_M_8;
+  printf("Setting miller to 8\n");
+  ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TAGENCODING , &miller);      
+  checkerr(rp, ret, 1, "setting miller");
+  }
+
+
+  { // Setting Session to 1
+  TMR_GEN2_Session session = TMR_GEN2_SESSION_S0;
+  printf("Setting Session to 1\n");
+  ret = TMR_paramSet(rp, TMR_PARAM_GEN2_SESSION , &session);      
+  checkerr(rp, ret, 1, "setting Session");
+  }
+  {
+    TMR_GEN2_Target targetvalue = TMR_GEN2_TARGET_A;
+    printf("Setting Target to AB\n");
+    ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TARGET , &targetvalue); 
+    checkerr(rp, ret, 1, "setting Target");
+  }
+  {
+    TMR_GEN2_LinkFrequency blf = TMR_GEN2_LINKFREQUENCY_250KHZ;
+    printf("Setting BLF 250KHz \n");
+    ret = TMR_paramSet(rp, TMR_PARAM_GEN2_BLF , &blf); 
+    checkerr(rp, ret, 1, "setting backscatter link frequency");
+  }
+  { // Setting Q static 0
+  TMR_SR_GEN2_QStatic Q;
+  uint8_t initQ = 0;
+  Q.initialQ = initQ;
+  printf("Setting Q Static to 0\n");
+  ret = TMR_paramSet(rp, TMR_PARAM_GEN2_Q , &Q);      
+  checkerr(rp, ret, 1, "setting Q Static");
+  }
   model.value = str;
   model.max = 64;
   TMR_paramGet(rp, TMR_PARAM_VERSION_MODEL, &model);
@@ -228,6 +265,13 @@ int main(int argc, char *argv[])
   ret = TMR_paramSet(rp, TMR_PARAM_READ_PLAN, &plan);
   checkerr(rp, ret, 1, "setting read plan");
 
+  {
+    /* false -- Each antenna gets a separate record
+     * true -- All antennas share a single record */
+    bool value = false;
+    ret = TMR_paramSet(rp, TMR_PARAM_TAGREADDATA_UNIQUEBYANTENNA,&value);
+    checkerr(rp, ret, 1, "setting uniqueByAntenna");
+  }
   rlb.listener = countMatchListener;
   rlb.cookie = NULL;
 
@@ -272,7 +316,6 @@ void
 countMatchListener(TMR_Reader *reader, const TMR_TagReadData *t, void *cookie)
 {
   char epcStr[128];
-
   if ( (0 < t->tag.epcByteCount))
   {
     TMR_bytesToHex(t->tag.epc, t->tag.epcByteCount, epcStr);

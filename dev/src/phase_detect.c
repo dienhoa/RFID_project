@@ -203,22 +203,26 @@ int main(int argc, char *argv[])
   ret = TMR_paramSet(rp, TMR_PARAM_GEN2_SESSION , &session);      
   checkerr(rp, ret, 1, "setting Session");
   }
+  {
+    TMR_GEN2_LinkFrequency blf = TMR_GEN2_LINKFREQUENCY_250KHZ;
+    printf("Setting BLF 250KHz \n");
+    ret = TMR_paramSet(rp, TMR_PARAM_GEN2_BLF , &blf); 
+    checkerr(rp, ret, 1, "setting backscatter link frequency");
+  }
   // {
   //   TMR_GEN2_Target targetvalue = TMR_GEN2_TARGET_AB;
   //   printf("Setting Target to AB\n");
   //   ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TARGET , &targetvalue); 
   //   checkerr(rp, ret, 1, "setting Target");
   // }
-  // { // Setting Q static 0
-  // TMR_GEN2_Q Q;
-  // Q.type = TMR_SR_GEN2_Q_STATIC;
-  // int(Q.u.staticQ.initialQ) = 0;
-  // printf("Setting Q Static to 0\n");
-  // ret = TMR_paramSet(rp, TMR_PARAM_GEN2_Q , &Q);      
-  // checkerr(rp, ret, 1, "setting Q Static");
-  // }
-
-
+  { // Setting Q static 0
+  TMR_SR_GEN2_QStatic Q;
+  uint8_t initQ = 0;
+  Q.initialQ = initQ;
+  printf("Setting Q Static to 0\n");
+  ret = TMR_paramSet(rp, TMR_PARAM_GEN2_Q , &Q);      
+  checkerr(rp, ret, 1, "setting Q Static");
+  }
 
   model.value = str;
   model.max = 64;
