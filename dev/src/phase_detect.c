@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
       average_delta_phase = 0;
       ant_1_phase = malloc(sizeof(int32_t)*20);
       ant_2_phase = malloc(sizeof(int32_t)*20);
-      ret = TMR_readIntoArray(rp, 800, &tagCount, &tagReads);
+      ret = TMR_readIntoArray(rp, 1000, &tagCount, &tagReads);
       checkerr(rp, ret, 1, "reading tags");
 
       printf("%d tags found.\n", tagCount);
@@ -304,16 +304,18 @@ int main(int argc, char *argv[])
           if (trd->antenna == 1)
           {
             *(ant_1_phase+ant_1_count) = trd->phase;
-            printf(" phase ant 1:%d \n", *(ant_1_phase+ant_1_count));
             ant_1_count++;
           }
 
           if (trd->antenna == 2)
           {
             *(ant_2_phase+ant_2_count) = trd->phase;
-            printf(" phase ant 2:%d \n", *(ant_2_phase+ant_2_count));
             ant_2_count++;
           }
+          printf(" ant:%d", trd->antenna);
+          printf(" phase:%d ", trd->phase);
+          printf(" RSSI:%d ", trd->rssi);
+          printf(" frequency:%d\n", trd->frequency);
         }
       }
       int32_t num_element_1;
@@ -324,10 +326,7 @@ int main(int argc, char *argv[])
       num_element_2 = ret_no_element(ant_2_phase);
       min_num_element = (num_element_1<num_element_2)?num_element_1:num_element_2;
       int32_t delta_phase[min_num_element];
-      printf("no tag found ant 1: %d \n", num_element_1);
-      printf("no tag found ant 2: %d \n", num_element_2);
-      printf("no tag MIN: %d \n", min_num_element);
-      for(int32_t i =0;i<min_num_element;i++)
+      for(int32_t i =0;i<min_num_element-1;i++)
       {
         delta_phase[i]=*(ant_1_phase+i)-*(ant_2_phase+i);
         if(delta_phase[i]<-90)
@@ -340,68 +339,22 @@ int main(int argc, char *argv[])
         }
         printf("delta_phase: %d \n", delta_phase[i]);
       }
-          // if (trd->antenna == 1)
-          // {
-          //   if (i<=1)
-          //   {
-          //     phase_1_pr = trd->phase;
-          //   }
-            
-          //   if ((trd->phase - phase_1_pr < 60)&&(trd->phase - phase_1_pr > -60))
-          //   {
-          //     phase_ant_1_sum += trd->phase;
-          //     ant_1_count++;
-          //     phase_1_pr = trd->phase;
-          //   }
-          // }
-          // if (trd->antenna == 2)
-          // {
-          //   if (i<=1)
-          //   {
-          //     phase_2_pr = trd->phase;
-          //   }
-            
-          //   if ((trd->phase - phase_2_pr < 60)&&(trd->phase - phase_2_pr > -60))
-          //   {
-          //     phase_ant_2_sum += trd->phase;
-          //     ant_2_count++;
-          //     phase_2_pr = trd->phase;
-          //   }
-
-          // }
-          // printf("%s", epcStr);
-          // printf(" ant:%d", trd->antenna);
-          // printf(" phase:%d ", trd->phase);
-          // printf(" RSSI:%d ", trd->rssi);
-          // printf(" frequency:%d", trd->frequency);
-          // printf("\n");   
-      //   }
-      // }
-          
-      // if((ant_1_count!=0)&&(ant_2_count!=0))
+      // printf("num_element_1: %d \n", num_element_1);
+      // printf("num_element_2: %d \n", num_element_2);
+      // printf("min_num_element: %d \n", min_num_element);
+      // int32_t sum_delta_phase = 0;
+      // int32_t average_delta_phase = 0;
+      // for (int32_t i=0;i<min_num_element;i++)
       // {
-      //   average_delta_phase = (int)(phase_ant_1_sum/ant_1_count) - (int)(phase_ant_2_sum/ant_2_count);
-      //   if(average_delta_phase<-90)
-      //   {
-      //     average_delta_phase = average_delta_phase + 180;
-      //   }
-      //   else if(average_delta_phase > 90 )
-      //   {
-      //     average_delta_phase =  -180 + average_delta_phase;
-      //   }
-      //   // printf("antenna 1 count:%d\n", ant_1_count);
-      //   // printf("antenna 2 count:%d\n", ant_2_count);
-      //   // printf("Sum of Phase ant 1:%d\n", phase_ant_1_sum);
-      //   // printf("Sum of Phase ant 2:%d\n", phase_ant_2_sum);
-      //   printf("Average of Difference Phase:%d\n", average_delta_phase);           
+      //   sum_delta_phase+= delta_phase[i];
+      //   // printf("sum_delta_phase: %d \n", sum_delta_phase);
       // }
-      // else
-      // {
-      //   printf("Not Enough Data to calculate !\n");
-      // }
-      //   free(tagReads);//free dynamics allocated memory 
-      
+      // average_delta_phase = (int)(sum_delta_phase/min_num_element);
+      // printf("average_delta_phase: %d \n", average_delta_phase);
 
+      free(tagReads);//free dynamics allocated memory 
+      free(ant_1_phase);
+      free(ant_2_phase);
     }
 
   TMR_destroy(rp);
