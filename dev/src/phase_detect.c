@@ -99,6 +99,16 @@ void parseAntennaList(uint8_t *antenna, uint8_t *antennaCount, char *args)
   *antennaCount = i;
 }
 
+int ret_no_element(int32_t* arrayofphase)
+{
+  int i;
+  int no_element = 0;
+  for (i = 0;*(arrayofphase+i)!= '\0';i++){
+    no_element++;
+  }
+  return no_element;
+}
+
 int main(int argc, char *argv[])
 {
   TMR_Reader r, *rp;
@@ -209,12 +219,12 @@ int main(int argc, char *argv[])
     ret = TMR_paramSet(rp, TMR_PARAM_GEN2_BLF , &blf); 
     checkerr(rp, ret, 1, "setting backscatter link frequency");
   }
-  // {
-  //   TMR_GEN2_Target targetvalue = TMR_GEN2_TARGET_AB;
-  //   printf("Setting Target to AB\n");
-  //   ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TARGET , &targetvalue); 
-  //   checkerr(rp, ret, 1, "setting Target");
-  // }
+  {
+    TMR_GEN2_Target targetvalue = TMR_GEN2_TARGET_A;
+    printf("Setting Target to A\n");
+    ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TARGET , &targetvalue); 
+    checkerr(rp, ret, 1, "setting Target");
+  }
   { // Setting Q static 0
   TMR_SR_GEN2_QStatic Q;
   uint8_t initQ = 0;
@@ -255,6 +265,7 @@ int main(int argc, char *argv[])
     ret = TMR_paramSet(rp, TMR_PARAM_TAGREADDATA_UNIQUEBYANTENNA,&value);
     checkerr(rp, ret, 1, "setting uniqueByAntenna");
   }
+
   {
     int32_t tagCount;
     int32_t ant_1_count;
@@ -265,7 +276,10 @@ int main(int argc, char *argv[])
     int32_t phase_1_pr;
     int32_t phase_2_pr;
     TMR_TagReadData* tagReads;
+    int32_t* ant_1_phase = NULL;
+    int32_t* ant_2_phase = NULL;
     int i;
+    printf("Phase Difference for tag 300833B2DDD9014000000000\n");// E2006316963EDAB165385F6A
     while(1)
     {
       ant_1_count = 0;
@@ -273,13 +287,15 @@ int main(int argc, char *argv[])
       phase_ant_1_sum = 0;
       phase_ant_2_sum = 0;
       average_delta_phase = 0;
-      ret = TMR_readIntoArray(rp, 500, &tagCount, &tagReads);
+      ant_1_phase = malloc(sizeof(int32_t)*20);
+      ant_2_phase = malloc(sizeof(int32_t)*20);
+      ret = TMR_readIntoArray(rp, 800, &tagCount, &tagReads);
       checkerr(rp, ret, 1, "reading tags");
 
       printf("%d tags found.\n", tagCount);
-      printf("Phase Difference for tag 300833B2DDD9014000000000\n");// E2006316963EDAB165385F6A
+
       for (i=0; i<tagCount; i++)
-      {
+      { 
         TMR_TagReadData* trd = &tagReads[i];
         char epcStr[128];
         TMR_bytesToHex(trd->tag.epc, trd->tag.epcByteCount, epcStr);
@@ -287,68 +303,108 @@ int main(int argc, char *argv[])
         {
           if (trd->antenna == 1)
           {
-            if (i<=1)
-            {
-              phase_1_pr = trd->phase;
-            }
-            
-            if ((trd->phase - phase_1_pr < 60)&&(trd->phase - phase_1_pr > -60))
-            {
-              phase_ant_1_sum += trd->phase;
-              ant_1_count++;
-              phase_1_pr = trd->phase;
-            }
+            *(ant_1_phase+ant_1_count) = trd->phase;
+            printf(" phase ant 1:%d \n", *(ant_1_phase+ant_1_count));
+            ant_1_count++;
           }
+
           if (trd->antenna == 2)
           {
-            if (i<=1)
-            {
-              phase_2_pr = trd->phase;
-            }
-            
-            if ((trd->phase - phase_2_pr < 60)&&(trd->phase - phase_2_pr > -60))
-            {
-              phase_ant_2_sum += trd->phase;
-              ant_2_count++;
-              phase_2_pr = trd->phase;
-            }
-
+            *(ant_2_phase+ant_2_count) = trd->phase;
+            printf(" phase ant 2:%d \n", *(ant_2_phase+ant_2_count));
+            ant_2_count++;
           }
-          printf("%s", epcStr);
-          printf(" ant:%d", trd->antenna);
-          printf(" phase:%d ", trd->phase);
-          printf(" RSSI:%d ", trd->rssi);
-          printf(" frequency:%d", trd->frequency);
-          printf("\n");   
         }
       }
-          
-      if((ant_1_count!=0)&&(ant_2_count!=0))
-      {
-        average_delta_phase = (int)(phase_ant_1_sum/ant_1_count) - (int)(phase_ant_2_sum/ant_2_count);
-        if(average_delta_phase<-90)
-        {
-          average_delta_phase = average_delta_phase + 180;
-        }
-        else if(average_delta_phase > 90 )
-        {
-          average_delta_phase =  -180 + average_delta_phase;
-        }
-        // printf("antenna 1 count:%d\n", ant_1_count);
-        // printf("antenna 2 count:%d\n", ant_2_count);
-        // printf("Sum of Phase ant 1:%d\n", phase_ant_1_sum);
-        // printf("Sum of Phase ant 2:%d\n", phase_ant_2_sum);
-        printf("Average of Difference Phase:%d\n", average_delta_phase);           
-      }
-      else
-      {
-        printf("Not Enough Data to calculate !\n");
-      }
-        free(tagReads);//free dynamics allocated memory 
-    }
+      int32_t num_element_1;
+      int32_t num_element_2;
+      int32_t min_num_element;
 
-  }
+      num_element_1 = ret_no_element(ant_1_phase);
+      num_element_2 = ret_no_element(ant_2_phase);
+      min_num_element = (num_element_1<num_element_2)?num_element_1:num_element_2;
+      int32_t delta_phase[min_num_element];
+      printf("no tag found ant 1: %d \n", num_element_1);
+      printf("no tag found ant 2: %d \n", num_element_2);
+      printf("no tag MIN: %d \n", min_num_element);
+      for(int32_t i =0;i<min_num_element;i++)
+      {
+        delta_phase[i]=*(ant_1_phase+i)-*(ant_2_phase+i);
+        if(delta_phase[i]<-90)
+        {
+          delta_phase[i] = delta_phase[i] + 180;
+        }
+        else if(delta_phase[i] > 90 )
+        {
+          delta_phase[i] =  -180 + delta_phase[i];
+        }
+        printf("delta_phase: %d \n", delta_phase[i]);
+      }
+          // if (trd->antenna == 1)
+          // {
+          //   if (i<=1)
+          //   {
+          //     phase_1_pr = trd->phase;
+          //   }
+            
+          //   if ((trd->phase - phase_1_pr < 60)&&(trd->phase - phase_1_pr > -60))
+          //   {
+          //     phase_ant_1_sum += trd->phase;
+          //     ant_1_count++;
+          //     phase_1_pr = trd->phase;
+          //   }
+          // }
+          // if (trd->antenna == 2)
+          // {
+          //   if (i<=1)
+          //   {
+          //     phase_2_pr = trd->phase;
+          //   }
+            
+          //   if ((trd->phase - phase_2_pr < 60)&&(trd->phase - phase_2_pr > -60))
+          //   {
+          //     phase_ant_2_sum += trd->phase;
+          //     ant_2_count++;
+          //     phase_2_pr = trd->phase;
+          //   }
+
+          // }
+          // printf("%s", epcStr);
+          // printf(" ant:%d", trd->antenna);
+          // printf(" phase:%d ", trd->phase);
+          // printf(" RSSI:%d ", trd->rssi);
+          // printf(" frequency:%d", trd->frequency);
+          // printf("\n");   
+      //   }
+      // }
+          
+      // if((ant_1_count!=0)&&(ant_2_count!=0))
+      // {
+      //   average_delta_phase = (int)(phase_ant_1_sum/ant_1_count) - (int)(phase_ant_2_sum/ant_2_count);
+      //   if(average_delta_phase<-90)
+      //   {
+      //     average_delta_phase = average_delta_phase + 180;
+      //   }
+      //   else if(average_delta_phase > 90 )
+      //   {
+      //     average_delta_phase =  -180 + average_delta_phase;
+      //   }
+      //   // printf("antenna 1 count:%d\n", ant_1_count);
+      //   // printf("antenna 2 count:%d\n", ant_2_count);
+      //   // printf("Sum of Phase ant 1:%d\n", phase_ant_1_sum);
+      //   // printf("Sum of Phase ant 2:%d\n", phase_ant_2_sum);
+      //   printf("Average of Difference Phase:%d\n", average_delta_phase);           
+      // }
+      // else
+      // {
+      //   printf("Not Enough Data to calculate !\n");
+      // }
+      //   free(tagReads);//free dynamics allocated memory 
+      
+
+    }
 
   TMR_destroy(rp);
   return 0;
+  }
 }

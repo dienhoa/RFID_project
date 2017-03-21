@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
   checkerr(rp, ret, 1, "setting Session");
   }
   {
-    TMR_GEN2_Target targetvalue = TMR_GEN2_TARGET_A;
+    TMR_GEN2_Target targetvalue = TMR_GEN2_TARGET_AB;
     printf("Setting Target to AB\n");
     ret = TMR_paramSet(rp, TMR_PARAM_GEN2_TARGET , &targetvalue); 
     checkerr(rp, ret, 1, "setting Target");
@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
   {
     /* false -- Each antenna gets a separate record
      * true -- All antennas share a single record */
-    bool value = false;
+    bool value = true;
     ret = TMR_paramSet(rp, TMR_PARAM_TAGREADDATA_UNIQUEBYANTENNA,&value);
     checkerr(rp, ret, 1, "setting uniqueByAntenna");
   }
@@ -290,9 +290,9 @@ int main(int argc, char *argv[])
   checkerr(rp, ret, 1, "starting reading");
   
 #ifndef WIN32
-  sleep(5);
+  while(1);
 #else
-  Sleep(5000);
+  while(1);
 #endif
 
   ret = TMR_stopReading(rp);
@@ -325,6 +325,7 @@ countMatchListener(TMR_Reader *reader, const TMR_TagReadData *t, void *cookie)
     {
       printf("Background read: %s\n", epcStr);
       printf(" ant:%d ", t->antenna);
+      printf("RSSI: %d\n", t->rssi );
       matched ++;
     }
 
