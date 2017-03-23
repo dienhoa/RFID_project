@@ -43,7 +43,6 @@ void serialPrinter(bool tx, uint32_t dataLen, const uint8_t data[],
 {
   FILE *out = cookie;
   uint32_t i;
-
   fprintf(out, "%s", tx ? "Sending: " : "Received:");
   for (i = 0; i < dataLen; i++)
   {
@@ -104,9 +103,12 @@ int ret_no_element(int32_t* arrayofphase)
   int i;
   int no_element = 0;
   for (i = 0;*(arrayofphase+i)!= '\0';i++){
+    // printf("element%d: %d\n",i, *(arrayofphase+i));
     no_element++;
   }
-  return no_element;
+
+  return no_element; 
+  
 }
 
 int main(int argc, char *argv[])
@@ -177,10 +179,10 @@ int main(int argc, char *argv[])
   ret = TMR_paramGet(rp, TMR_PARAM_REGION_ID, &region);
   checkerr(rp, ret, 1, "getting region");
   */
-  printf("Setting region to EU3.\n");
-  region = TMR_REGION_EU3;
-  ret = TMR_paramSet(rp, TMR_PARAM_REGION_ID, &region);
-  checkerr(rp, ret, 1, "setting region");
+  // printf("Setting region to EU3.\n");
+  // region = TMR_REGION_EU3;
+  // ret = TMR_paramSet(rp, TMR_PARAM_REGION_ID, &region);
+  // checkerr(rp, ret, 1, "setting region");
 
   {
     printf("Setting hoptable to 866300.\n");
@@ -278,17 +280,18 @@ int main(int argc, char *argv[])
     TMR_TagReadData* tagReads;
     int32_t* ant_1_phase = NULL;
     int32_t* ant_2_phase = NULL;
+
     int i;
     printf("Phase Difference for tag 300833B2DDD9014000000000\n");// E2006316963EDAB165385F6A
     while(1)
     {
+      ant_1_phase = calloc(10,sizeof(int32_t));
+      ant_2_phase = calloc(10,sizeof(int32_t));
       ant_1_count = 0;
       ant_2_count = 0;
       phase_ant_1_sum = 0;
       phase_ant_2_sum = 0;
       average_delta_phase = 0;
-      ant_1_phase = malloc(sizeof(int32_t)*20);
-      ant_2_phase = malloc(sizeof(int32_t)*20);
       ret = TMR_readIntoArray(rp, 1000, &tagCount, &tagReads);
       checkerr(rp, ret, 1, "reading tags");
 
@@ -318,45 +321,52 @@ int main(int argc, char *argv[])
           printf(" frequency:%d\n", trd->frequency);
         }
       }
-      int32_t num_element_1;
-      int32_t num_element_2;
-      int32_t min_num_element;
-
+      int32_t num_element_1 =0;
+      int32_t num_element_2 =0;
+      int32_t min_num_element = 0;
+      printf("antenna 1: \n");
       num_element_1 = ret_no_element(ant_1_phase);
+      printf("antenna 2: \n");
       num_element_2 = ret_no_element(ant_2_phase);
       min_num_element = (num_element_1<num_element_2)?num_element_1:num_element_2;
       int32_t delta_phase[min_num_element];
-      for(int32_t i =0;i<min_num_element-1;i++)
+      for(int32_t i =0;i<min_num_element;i++)
       {
         delta_phase[i]=*(ant_1_phase+i)-*(ant_2_phase+i);
-        if(delta_phase[i]<-90)
+        if(delta_phase[i]<-85) // because distance btw 2 antenna is 8.1 cm
         {
           delta_phase[i] = delta_phase[i] + 180;
         }
-        else if(delta_phase[i] > 90 )
+        else if(delta_phase[i] > 85 )
         {
           delta_phase[i] =  -180 + delta_phase[i];
         }
         printf("delta_phase: %d \n", delta_phase[i]);
       }
-      // printf("num_element_1: %d \n", num_element_1);
-      // printf("num_element_2: %d \n", num_element_2);
-      // printf("min_num_element: %d \n", min_num_element);
-      // int32_t sum_delta_phase = 0;
-      // int32_t average_delta_phase = 0;
-      // for (int32_t i=0;i<min_num_element;i++)
-      // {
-      //   sum_delta_phase+= delta_phase[i];
-      //   // printf("sum_delta_phase: %d \n", sum_delta_phase);
-      // }
-      // average_delta_phase = (int)(sum_delta_phase/min_num_element);
-      // printf("average_delta_phase: %d \n", average_delta_phase);
 
-      free(tagReads);//free dynamics allocated memory 
-      free(ant_1_phase);
-      free(ant_2_phase);
+      printf("num_element_1: %d \n", num_element_1);
+      printf("num_element_2: %d \n", num_element_2);
+      printf("min_num_element: %d \n", min_num_element);
+      int32_t sum_delta_phase = 0;
+      int32_t average_delta_phase = 0;
+      if (min_num_element>1)
+      {
+        for (int32_t i=0;i<min_num_element;i++)
+        {
+          sum_delta_phase+= delta_phase[i];
+          // printf("sum_delta_phase: %d \n", sum_delta_phase);
+        }
+        average_delta_phase = (int)(sum_delta_phase/min_num_element);
+        printf("average_delta_phase: %d \n", average_delta_phase);
+        free(tagReads);//free dynamics allocated memory 
+        free(ant_1_phase);
+        free(ant_2_phase);
+      }
+      else
+      {
+        printf("Not Enough Data\n");
+      }
     }
-
   TMR_destroy(rp);
   return 0;
   }
